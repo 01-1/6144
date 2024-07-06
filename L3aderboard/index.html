@@ -18,7 +18,7 @@
         <div class="position">1</div>
         <div class="details">
           <span class="name">Not Loaded</span>
-          <span class="score">2147483647 pts</span>
+          <span class="score">0 pts</span>
         </div>
       </div>
       <div class="leaderboard-item">
@@ -32,37 +32,39 @@
         <div class="position">3</div>
         <div class="details">
           <span class="name">Not Loaded</span>
-          <span class="score">-2147483648 pts</span>
+          <span class="score">0 pts</span>
         </div>
       </div>
       <!-- Add more leaderboard items as needed -->
     </div>
   </div>
-  // todo fix leaderboard
   <script type="module" src="../js/L3aderboard.js"></script>
   <script>
-    // Example of fetching leaderboard data from an API
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', async function () {
       const leaderboard = document.querySelector('.leaderboard');
-      const len = window.fraxtaL3aderboard.getHighscoreLength();  
-      window.fraxtaL3aderboard.getIndexRange(0, Math.min(len, 50)).then((res) => {
-        res.forEach((item, index) => {
-          const address = item[0];
-          const highscore = item[1];
-          const name = window.fraxtaL3aderboard.getName(address);
+      leaderboard.innerHTML = "";
+      window.fraxtaL3aderboard.getAll().then((res) =>
+      res.forEach(async (item, index) => {
+        console.log(item, index);
+        const address = item[0];
+        const highscore = item[1];
+        let name = await window.fraxtaL3aderboard.getName(address);
 
-          const leaderboardItem = document.createElement('div');
-          leaderboardItem.classList.add('leaderboard-item');
-          leaderboardItem.innerHTML = `
-              <div class="position">${index + 1}</div>
-              <div class="details">
-                <span class="name">${name}</span>
-                <span class="score">${highscore} pts</span>
-              </div>
-            `;
-          leaderboard.appendChild(leaderboardItem);
-        });
+        if (!name) {
+          name = address;
+        }
+        const leaderboardItem = document.createElement('div');
+        leaderboardItem.classList.add('leaderboard-item');
+        leaderboardItem.innerHTML = `
+            <div class="position">${index + 1}</div>
+            <div class="details">
+              <span class="name">${name}</span>
+              <span class="score">${highscore} pts</span>
+            </div>
+          `;
+        leaderboard.appendChild(leaderboardItem);
       })
+      );
     }
     );
   </script>

@@ -1,6 +1,4 @@
 import { ethers } from "https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.min.js";
-let signer = null;
-let provider;
 
 const fraxtaL3aderboardABI = [
   {
@@ -123,8 +121,13 @@ const fraxtaL3aderboardABI = [
     "type": "function"
   }
 ];
+
 const fraxtaL3aderboardAddress = "0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0";
 const fraxtaL3aderboardContract = new ethers.Contract(fraxtaL3aderboardAddress, fraxtaL3aderboardABI);
+const RPC_URL = "https://virtual.fraxtal.rpc.tenderly.co/1a83593c-46ea-4fa9-8062-7294948133d0";
+
+let signer = null;
+let provider = new ethers.JsonRpcProvider(RPC_URL);
 
 const fraxtaL3aderboard = {
   resetHighscore: async () => {
@@ -132,7 +135,8 @@ const fraxtaL3aderboard = {
     console.log(`resetHighscore result: ${result}`);
   },
   updateHighscore: async (highScore) => {
-    if (fraxtaL3aderboard.getHighscore(signer.address) >= highScore) {
+    const oldHighScore = fraxtaL3aderboard.getHighscore(signer.address);
+    if (oldHighScore >= highScore) {
       console.log(`No high score.`);
       return;
     }
@@ -141,35 +145,36 @@ const fraxtaL3aderboard = {
   },
 
   getName: async (address) => {
-    const result = await fraxtaL3aderboardContract.getName(address);
+    const result = await fraxtaL3aderboardContract.connect(provider).getName(address);
     console.log(`getName result: ${result}`)
     return result;
   },
 
   getHighscore: async (address) => {
-    const result = await fraxtaL3aderboardContract.getHighscore(address);
+    const result = await fraxtaL3aderboardContract.connect(provider).getHighscore(address);
     console.log(`getHighscore result: ${result}`)
     return result;
   },
 
   getHighscoreLength: async () => {
-    console.log(signer);
-    const result = await fraxtaL3aderboardContract.getHighscoreLength();
+    const result = await fraxtaL3aderboardContract.connect(provider).getHighscoreLength();
     console.log(`getHighscoreLength result: ${result}`)
     return result;
   },
 
   getHighscoreByIndex: async (index) => {
-    const result = await fraxtaL3aderboardContract.getHighscoreByIndex(index);
+    const result = await fraxtaL3aderboardContract.connect(provider).getHighscoreByIndex(index);
     console.log(`getHighscoreByIndex result: ${result}`)
     return result;
   },
 
-  getIndexRange: async (indexStart, indexEnd) => {
+  getAll: async (indexStart, indexEnd) => {
+    const len = await fraxtaL3aderboard.getHighscoreLength();  
     let result = [];
-    for (let i = indexStart; i < indexEnd; i++) {
-        result.push(fraxtaL3aderboard.getHighscoreByIndex(i));
+    for (let i = 0; i < len; i++) {
+        result.push(await fraxtaL3aderboard.getHighscoreByIndex(i));
     }
+    result.sort((a, b) => b[1] > a[1]);
     return result;
   }
 };
@@ -195,25 +200,65 @@ if (awawa) {
         // so they only have read-only access
         console.log("MetaMask not installed; using read-only defaults");
         alert("MetaMask not installed, please install to use FraxtaL3aderboard.");
-        provider = ethers.getDefaultProvider();
-        signer = await provider.getSigner();
+        provider = new ethers.JsonRpcProvider(RPC_URL);
       } else {
-        // Connect to the MetaMask EIP-1193 object. This is a standard
-        // protocol that allows Ethers access to make all read-only
-        // requests through MetaMask.
-        provider = new ethers.BrowserProvider(window.ethereum);
+
+        // Request account access if needed
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+        // Ensure MetaMask is connected to the custom L3 chain
+        await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+                chainId: '0x2d7',
+                chainName: 'FraxtaL3aderboard', // Replace with your L3 chain's name
+                rpcUrls: [RPC_URL],
+                nativeCurrency: {
+                    name: 'FraxtaL3aderboardToken', // Replace with your L3 chain's token name
+                    symbol: 'FXL3B', // Replace with your L3 chain's token symbol
+                    decimals: 18
+                },
+                blockExplorerUrls: ['https://dashboard.tenderly.co/explorer/vnet/505969de-d873-40f0-8951-f0d3985c3553'] // Replace with your block explorer URL
+            }]
+        });
+
+        // Create a new Web3Provider instance using MetaMask's provider
+        const provider = new ethers.BrowserProvider(web3.currentProvider);
+        signer = await provider.getSigner();
+        const address = await signer.getAddress();
+
+        // Give from faucet
+        const url = "https://faas-nyc1-2ef2e6cc.doserverless.co/api/v1/web/fn-1ec160f1-f6d5-4003-a6ee-34baa046cdeb/default/trans?recipient=" + address;
+        const headers = {
+          "Content-Type": "application/json"
+        };
+
+        try {
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: headers,
+
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+
+          console.log(response); // Process or use the response data here
+        } catch (error) {
+          console.error('Error in faucet:', error);
+        }
     
         // It also provides an opportunity to request access to write
         // operations, which will be performed by the private key
         // that MetaMask manages for the user.
-        signer = await provider.getSigner();
         document.getElementById('loginButton').innerHTML = "Logout from MetaMask";
         console.log("Login successful");
     
         // TODO: add loading highscore from leaderboard.
       }
     });
-} else {
-    provider = ethers.getDefaultProvider();
-    signer = await provider.getSigner();
 }
+
+window.fraxtaL3aderboardProvider = provider;
+window.dq = new ethers.Contract(fraxtaL3aderboardAddress, fraxtaL3aderboardABI, provider)
