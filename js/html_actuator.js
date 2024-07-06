@@ -30,8 +30,9 @@ HTMLActuator.prototype.actuate = function (grid, metadata) {
       } else if (metadata.won) {
         self.message(true); // You win!
       }
+      // prompt("Do you want to upload your score to blockchain")
+      fraxtaL3aderboard.updateHighscore(metadata.score);
     }
-
   });
 };
 

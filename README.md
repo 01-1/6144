@@ -1,1 +1,1 @@
-6144: 2048 x L3
+ This is 6144, a demo of FraxtaL3aderboard based on 2048, but Layer-3 times better! Sign in with MetaMask to post your scores to the blockchain! (To post your scores, click new game or win/lose a game.) 

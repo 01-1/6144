@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div class="container">
+    <h1 class="title">Leaderboard</h1>
+    <div class="leaderboard">
+      <div class="leaderboard-item">
+        <div class="position">1</div>
+        <div class="details">
+          <span class="name">Not Loaded</span>
+          <span class="score">2147483647 pts</span>
+        </div>
+      </div>
+      <div class="leaderboard-item">
+        <div class="position">2</div>
+        <div class="details">
+          <span class="name">Not Loaded</span>
+          <span class="score">0 pts</span>
+        </div>
+      </div>
+      <div class="leaderboard-item">
+        <div class="position">3</div>
+        <div class="details">
+          <span class="name">Not Loaded</span>
+          <span class="score">-2147483648 pts</span>
+        </div>
+      </div>
+      <!-- Add more leaderboard items as needed -->
+    </div>
+  </div>
+  // todo fix leaderboard
+  <script type="module" src="../js/L3aderboard.js"></script>
+  <script>
+    // Example of fetching leaderboard data from an API
+    document.addEventListener('DOMContentLoaded', function () {
+      const leaderboard = document.querySelector('.leaderboard');
+      const len = window.fraxtaL3aderboard.getHighscoreLength();  
+      window.fraxtaL3aderboard.getIndexRange(0, Math.min(len, 50)).then((res) => {
+        res.forEach((item, index) => {
+          const address = item[0];
+          const highscore = item[1];
+          const name = window.fraxtaL3aderboard.getName(address);
+
+          const leaderboardItem = document.createElement('div');
+          leaderboardItem.classList.add('leaderboard-item');
+          leaderboardItem.innerHTML = `
+              <div class="position">${index + 1}</div>
+              <div class="details">
+                <span class="name">${name}</span>
+                <span class="score">${highscore} pts</span>
+              </div>
+            `;
+          leaderboard.appendChild(leaderboardItem);
+        });
+      })
+    }
+    );
+  </script>
+</body>
+
+</html>
